@@ -13,5 +13,8 @@ export const GlobalVariables = css`
     --color-med-gray: #464646;
     --color-black: #000;
     --color-lgt-black: #313133;
+    --color-danger-red: #d9534f;
+    --color-success-green: #5cb85c;
+    --color-info-blue: #428bca;
   }
 `;

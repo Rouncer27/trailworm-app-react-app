@@ -1,13 +1,28 @@
+// NPM Packages. //
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useHistory } from "react-router-dom";
 import styled from "styled-components";
+import { connect } from "react-redux";
+import PropTypes from "prop-types";
+
+// Actions. //
+import { logout } from "../actions/auth";
+// Style Helpers //
+import { B1White } from "../styles/helpers";
+
+// Images. //
 import logoHorizontal from "../assets/images/trailworm-horizontal.png";
 
 const NavigationStyled = styled.nav`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: center;
   padding: 2rem;
   background-color: var(--color-lgt-black);
+  z-index: 99999;
 
   .menuToggle {
     display: flex;
@@ -94,44 +109,135 @@ const NavigationStyled = styled.nav`
         : "transform: translate(-150%, 0)"};
     transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1);
 
-    a {
+    ul {
       width: 100%;
-      text-decoration: none;
-      color: #232323;
-      transition: color 0.3s ease;
       text-align: center;
+    }
 
-      &:hover {
-        color: tomato;
-      }
+    li {
+      display: block;
+      width: 100%;
+      padding: 1rem 0;
+      a,
+      button {
+        display: block;
+        width: 100%;
+        text-decoration: none;
+        color: #232323;
+        transition: color 0.3s ease;
+        text-align: center;
 
-      &[aria-current="page"] {
-        color: #fff;
-        background-color: #232323;
-        opacity: 0.85;
-        cursor: not-allowed;
-      }
+        &:hover {
+          color: tomato;
+        }
 
-      li {
-        padding: 1rem 0;
+        &[aria-current="page"] {
+          color: #fff;
+          background-color: #232323;
+          opacity: 0.85;
+          cursor: not-allowed;
+        }
       }
     }
   }
 `;
 
 const MainLogo = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   width: 100%;
+  max-width: 27rem;
 
   @media (min-width: 768px) {
-    width: 25%;
+    width: 50%;
+    max-width: 100%;
+  }
+  .logo__nav {
+    width: 50%;
+
+    ul {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+
+      li {
+        margin: 0 1rem;
+
+        a,
+        button {
+          ${B1White};
+          display: inline-block;
+          margin: 0;
+        }
+
+        button {
+          position: relative;
+          top: auto;
+          right: auto;
+          bottom: auto;
+          left: auto;
+          opacity: 1;
+          background-color: transparent;
+          border: none;
+        }
+      }
+    }
+  }
+
+  .logo__wrapper {
+    width: 50%;
+
+    img {
+      max-width: 27rem;
+    }
   }
 `;
 
-const Navigation = () => {
+const Navigation = ({ logout, auth: { isAuthenticated, loading } }) => {
   const [isOpen, setIsOpen] = useState(false);
+  let history = useHistory();
   const handleToggleMenu = () => {
     setIsOpen(!isOpen);
   };
+
+  const authLinks = (
+    <ul>
+      <li>
+        <NavLink to="/dashboard">My Profile</NavLink>
+      </li>
+      <li>
+        <NavLink to="/get-started">Info</NavLink>
+      </li>
+      <li>
+        <button
+          type="button"
+          onClick={() => {
+            logout();
+            history.push("/");
+          }}
+        >
+          Logout
+        </button>
+      </li>
+    </ul>
+  );
+
+  const guestLinks = (
+    <ul>
+      <li>
+        <NavLink to="/get-started">Info</NavLink>
+      </li>
+      <li>
+        <NavLink to="/login">Login</NavLink>
+      </li>
+      <li>
+        <NavLink to="/signup">Signup</NavLink>
+      </li>
+    </ul>
+  );
 
   return (
     <NavigationStyled role="navigation" isOpen={isOpen}>
@@ -142,26 +248,62 @@ const Navigation = () => {
           <span className="span-2" />
           <span className="span-3" />
         </div>
-        <ul className="menu" onClick={handleToggleMenu}>
-          <NavLink to="/" exact>
-            <li>Home</li>
-          </NavLink>
-          <NavLink to="/about">
-            <li>About</li>
-          </NavLink>
-          <NavLink to="/info">
-            <li>Info</li>
-          </NavLink>
-          <NavLink to="/contact">
-            <li>Contact</li>
-          </NavLink>
-        </ul>
+        <div
+          className="menu"
+          role="button"
+          tabIndex="0"
+          onClick={handleToggleMenu}
+          onKeyPress={handleToggleMenu}
+        >
+          {!loading && isAuthenticated ? authLinks : guestLinks}
+        </div>
       </div>
       <MainLogo className="logo">
-        <img src={logoHorizontal} alt="The Trailworm App" />
+        <div className="logo__wrapper">
+          <img src={logoHorizontal} alt="The Trailworm App" />
+        </div>
+        <div className="logo__nav">
+          {!loading && isAuthenticated ? (
+            <ul>
+              <li>
+                <NavLink to="/dashboard">My Profile</NavLink>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+
+                    history.push("/");
+                  }}
+                >
+                  Logout
+                </button>
+              </li>
+            </ul>
+          ) : (
+            <ul>
+              <li>
+                <NavLink to="/login">Login</NavLink>
+              </li>
+              <li>
+                <NavLink to="/register">Signup</NavLink>
+              </li>
+            </ul>
+          )}
+        </div>
       </MainLogo>
     </NavigationStyled>
   );
 };
 
-export default Navigation;
+Navigation.propTypes = {
+  logout: PropTypes.func.isRequired,
+  auth: PropTypes.object.isRequired,
+};
+
+const mapStateToProps = (state) => ({
+  auth: state.auth,
+});
+
+export default connect(mapStateToProps, { logout })(Navigation);
